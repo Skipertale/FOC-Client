@@ -1,0 +1,21 @@
+UPDATE achievement_defs SET name = 'Первые слова', description = 'Отправить первое IC-сообщение', category = 'social' WHERE id = 'first_ic';
+UPDATE achievement_defs SET name = 'Болтун', description = 'Отправить 100 IC-сообщений', category = 'social' WHERE id = 'chatterbox';
+UPDATE achievement_defs SET name = 'Говорун', description = 'Отправить 1 000 IC-сообщений', category = 'social' WHERE id = 'loquacious';
+UPDATE achievement_defs SET name = 'Красноречие', description = 'Отправить 10 000 IC-сообщений', category = 'social' WHERE id = 'gift_of_gab';
+UPDATE achievement_defs SET name = 'Привет!', description = 'Отправить первое OOC-сообщение', category = 'social' WHERE id = 'first_ooc';
+UPDATE achievement_defs SET name = 'Общительный', description = 'Отправить 500 OOC-сообщений', category = 'social' WHERE id = 'socialite';
+UPDATE achievement_defs SET name = 'С возвращением', description = 'Залогиниться 10 раз', category = 'social' WHERE id = 'welcome_back';
+UPDATE achievement_defs SET name = 'Завсегдатай', description = 'Залогиниться 50 раз', category = 'social' WHERE id = 'regular';
+UPDATE achievement_defs SET name = 'Ветеран', description = 'Залогиниться 200 раз', category = 'social' WHERE id = 'veteran';
+UPDATE achievement_defs SET name = 'Час', description = 'Наиграть 1 час', category = 'social' WHERE id = 'one_hour';
+UPDATE achievement_defs SET name = 'День', description = 'Наиграть 24 часа', category = 'social' WHERE id = 'day_player';
+UPDATE achievement_defs SET name = 'Неделя', description = 'Наиграть 168 часов', category = 'social' WHERE id = 'week_player';
+UPDATE achievement_defs SET name = 'Странник', description = 'Посетить 5 разных комнат', category = 'explorer' WHERE id = 'wanderer';
+UPDATE achievement_defs SET name = 'Исследователь', description = 'Посетить 20 разных комнат', category = 'explorer' WHERE id = 'explorer';
+UPDATE achievement_defs SET name = 'Картограф', description = 'Посетить все комнаты', category = 'explorer' WHERE id = 'cartographer';
+UPDATE achievement_defs SET name = 'Стилист', description = 'Сменить персонажа 5 раз', category = 'explorer' WHERE id = 'stylist';
+UPDATE achievement_defs SET name = 'Модник', description = 'Сменить персонажа 50 раз', category = 'explorer' WHERE id = 'fashionista';
+UPDATE achievement_defs SET name = 'Миротворец', description = 'Вызвать модератора 5 раз', category = 'mod' WHERE id = 'peacekeeper';
+UPDATE achievement_defs SET name = 'Энфорсер', description = 'Кикнуть игроков 10 раз', category = 'mod' WHERE id = 'enforcer';
+
+PRAGMA user_version = 6;

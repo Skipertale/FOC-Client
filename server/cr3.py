@@ -1,0 +1,170 @@
+from urllib import parse
+import asyncio
+import discord
+from discord.ext import commands
+from discord.utils import escape_markdown
+from discord.errors import Forbidden, HTTPException
+
+
+class CR3(commands.Bot):
+    """
+    The AO2 Discord bridge self.
+    """
+
+    def __init__(self, server, target_chanel, hub_id, area_id):
+        intents = discord.Intents.all()
+        super().__init__(command_prefix="$", intents=intents)
+        self.server = server
+        self.pending_messages = []
+        self.hub_id = hub_id
+        self.area_id = area_id
+        self.target_channel = target_chanel
+
+    async def init(self, token):
+        """Starts the actual bot"""
+        print("Trying to start the Discord Bridge bot...")
+        try:
+            await self.start(token)
+        except Exception as e:
+            print(e)
+
+    def queue_message(self, name, message, charname, anim):
+        base = None
+        avatar_url = None
+        anim_url = None
+        embed_emotes = False
+        if "base_url" in self.server.config["cr3"]:
+            base = self.server.config["cr3"]["base_url"]
+        if "embed_emotes" in self.server.config["cr3"]:
+            embed_emotes = self.server.config["cr3"]["embed_emotes"]
+        if base is not None:
+            avatar_url = base + \
+                parse.quote("characters/" + charname + "/char_icon.png")
+            if embed_emotes:
+                anim_url = base + parse.quote(
+                    "characters/" + charname + "/" + anim + ".png"
+                )
+        self.pending_messages.append([name, message, avatar_url, anim_url])
+
+    async def on_ready(self):
+        print("Discord Bridge Successfully logged in.")
+        self.guild = self.guilds[0]
+        self.channel = discord.utils.get(
+            self.guild.text_channels, name=self.target_channel
+        )
+        await self.wait_until_ready()
+
+        while True:
+            if len(self.pending_messages) > 0:
+                await self.send_char_message(*self.pending_messages.pop())
+
+            await asyncio.sleep(max(0.1, self.server.config["cr3"]["tickspeed"]))
+
+    async def on_message(self, message):
+        # Screw these loser bots
+        if message.author.bot or message.webhook_id is not None:
+            return
+
+        if message.channel != self.channel:
+            return
+
+        if message.content == "!getareas":
+            msg = ""
+            number_players = int(self.server.player_count)
+            msg += f"**Clients in Areas**\n"
+            for hub in self.server.hub_manager.hubs:
+                if len(hub.clients) == 0:
+                    continue
+                msg += f"**[={hub.name}=]**\n"
+                for area in hub.areas:
+                    if area.hidden:
+                        continue
+                    if len(area.clients) == 0:
+                        continue
+                    msg += f"\t**[{area.id}] {area.name} (users: {len(area.clients)}) [{area.status}]"
+                    if area.locked:
+                        msg += f" [LOCKED]"
+                    elif area.muted:
+                        msg += f" [SPECTATABLE]"
+                    if area.get_owners() != "":
+                        msg += f" [CM(s): {area.get_owners()}]"
+                    msg += "**\n"
+                    for client in area.clients:
+                        if client.hidden:
+                            continue
+                        msg += "\t  ◾ "
+                        if client in area.afkers:
+                            msg += "[AFK] "
+                        if client.is_mod:
+                            msg += "[M] "
+                        elif client in area.area_manager.owners:
+                            msg += "[GM] "
+                        elif client in area._owners:
+                            msg += "[CM] "
+                        elif client.hidden:
+                            msg += "[HIDDEN] "
+                        if client.showname != client.char_name:
+                            msg += f'[{client.id}] "{client.showname}" ({client.char_name}) ({client.ipid}) "{client.name}"'
+                        else:
+                            msg += f"[{client.id}] {client.showname} ({client.ipid}) {client.name}"
+                        if client.pos != "":
+                            msg += f" <{client.pos}>"
+                        msg += "\n"
+                msg += "\n"
+            msg += f"Current online: {number_players} clients\n"
+            if len(msg) > 2000:
+                await self.channel.send(f"Current online: {number_players} clients\nArea information hidden due to char limit.")
+            else:
+                await self.channel.send(msg)
+            return
+
+        if not message.content.startswith("$"):
+            try:
+                max_char = int(self.server.config["max_chars_ic"])
+            except Exception:
+                max_char = 256
+            if len(message.clean_content) > max_char:
+                await self.channel.send(
+                    "Your message was too long - it was not received by the client. (The limit is 256 characters)"
+                )
+                return
+            self.server.send_discord_chat(
+                message.author.name,
+                escape_markdown(message.clean_content),
+                self.hub_id,
+                self.area_id,
+            )
+
+        # await self.process_commands(message)
+
+    async def send_char_message(self, name, message, avatar=None, image=None):
+        webhook = None
+        embed = None
+        try:
+            webhooks = await self.channel.webhooks()
+            for hook in webhooks:
+                if hook.user == self.user or hook.name == "AO2_Bridgebot":
+                    webhook = hook
+                    break
+            if webhook is None:
+                webhook = await self.channel.create_webhook(name="AO2_Bridgebot")
+            if image is not None:
+                embed = discord.Embed()
+                embed.set_image(url=image)
+                print(avatar, image)
+            await webhook.send(message, username=name, avatar_url=avatar, embed=embed)
+            print(
+                f'[DiscordBridge] Sending message from "{name}" to "{self.channel.name}"'
+            )
+        except Forbidden:
+            print(
+                f'[DiscordBridge] Insufficient permissions - couldnt send char message "{name}: {message}" with avatar "{avatar}" to "{self.channel.name}"'
+            )
+        except HTTPException:
+            print(
+                f'[DiscordBridge] HTTP Failure - couldnt send char message "{name}: {message}" with avatar "{avatar}" to "{self.channel.name}"'
+            )
+        except Exception as ex:
+            # This is a workaround to a problem - [Errno 104] Connection reset by peer occurs due to too many calls for this func.
+            # Simple solution is to increase the tickspeed config so it waits longer between messages sent.
+            print(f"[DiscordBridge] Exception - {ex}")

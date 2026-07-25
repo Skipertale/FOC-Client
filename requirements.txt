@@ -1,0 +1,12 @@
+oyaml
+websockets
+arrow
+timeparse-plus
+geoip2
+discord
+pymysql
+pystun3
+fastapi
+uvicorn
+jinja2
+backports.zoneinfo==0.2.1;python_version<"3.9"

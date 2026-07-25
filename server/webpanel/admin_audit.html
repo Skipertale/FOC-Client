@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FOC CC — Аудит</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body data-page="audit">
+<div class="app">
+      {% include '_sidebar.html' %}
+  <main class="main">
+    <div class="page-header"><div><h1>Журнал аудита</h1><p>Действия администраторов панели</p></div></div>
+    <div class="panel"><div class="panel-bd" style="padding:0">
+      <div class="table-wrap"><table>
+        <thead><tr><th>Время</th><th>Действие</th><th>IPID</th><th>Цель</th><th>Детали</th></tr></thead>
+        <tbody id="auditTable"><tr><td colspan="5" style="text-align:center;padding:32px"><div class="loading"><div class="spinner"></div></div></td></tr></tbody>
+      </table></div></div></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px">
+      <span id="auditPageInfo" class="text-muted"></span>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-ghost btn-sm" id="auditPrev" onclick="loadAudit((window._auditPage||1)-1)" style="display:none">&larr; Назад</button>
+        <button class="btn btn-ghost btn-sm" id="auditNext" onclick="loadAudit((window._auditPage||1)+1)" style="display:none">Вперёд &rarr;</button>
+      </div>
+    </div>
+  </main>
+</div>
+{% include '_modals.html' %}
+<script src="/app.js"></script>
+<script>
+let _auditCache = [];
+function openAuditDetail(idx) {
+  try {
+    const l = _auditCache[idx]; if (!l) return;
+    let details = '';
+    for (const [k,v] of Object.entries(l.details||{})) { details += `<div><span class="lbl">${k}:</span> ${esc(String(v))}</div>`; }
+    document.getElementById('auditDetailBody').innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+        <div><div class="lbl">Время</div><div>${l.time}</div></div>
+        <div><div class="lbl">Действие</div><span class="tag tag-gold">${esc(l.action)}</span></div>
+        <div><div class="lbl">IPID</div><div>${l.ipid||'\u2014'}</div></div>
+        <div><div class="lbl">Цель</div><div>${l.target_ipid||'\u2014'}</div></div>
+      </div>
+      ${details ? '<div class="lbl" style="margin-bottom:4px">Подробности</div><div style="padding:12px;border-radius:8px;background:rgba(0,0,0,0.15);font-size:0.85rem">'+details+'</div>' : ''}`;
+    openModal('auditDetailModal');
+  } catch(e) { showToast(e.message,'error'); }
+}
+async function loadAudit(page) {
+  if (page===undefined) page = window._auditPage||1;
+  try {
+    const d = await api(`/api/admin/log?page=${page}&limit=50`);
+    const tbl = document.getElementById('auditTable'); if (!tbl) return;
+    if (!d.items||!d.items.length) { tbl.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-dim);padding:24px">Нет записей</td></tr>'; return; }
+    const pi = document.getElementById('auditPageInfo');
+    if (pi) pi.textContent = `Стр. ${d.page}/${d.pages||1} (${d.total})`;
+    _auditCache = d.items;
+    tbl.innerHTML = d.items.map((l,i) => `<tr onclick="openAuditDetail(${i})" style="cursor:pointer">
+      <td style="font-size:0.72rem;white-space:nowrap;color:var(--text-dim)">${l.time}</td>
+      <td><span class="tag tag-gold">${esc(l.action)}</span></td>
+      <td>${l.ipid||'\u2014'}</td>
+      <td>${l.target_ipid||'\u2014'}</td>
+      <td style="font-size:0.75rem;color:var(--text-dim);max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${Object.entries(l.details||{}).slice(0,3).map(([k,v])=>k+'='+v).join(', ')}</td>
+    </tr>`).join('');
+    window._auditPage = d.page;
+    document.getElementById('auditPrev').style.display = d.page>1?'inline-flex':'none';
+    document.getElementById('auditNext').style.display = d.page<d.pages?'inline-flex':'none';
+  } catch(e) { showToast('Аудит: '+e.message,'error'); }
+}
+loadAudit(1);
+</script>
+</body>
+</html>

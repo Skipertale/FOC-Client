@@ -1,0 +1,9 @@
+CREATE TABLE IF NOT EXISTS player_warnings(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    ipid INTEGER NOT NULL,
+    warned_by TEXT NOT NULL DEFAULT 'Panel',
+    reason TEXT NOT NULL,
+    warned_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+PRAGMA user_version = 7;

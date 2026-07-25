@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FOC CC — Настройки сервера</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body data-page="admin_settings">
+<div class="app">
+      {% include '_sidebar.html' %}
+  <main class="main">
+    <div class="page-header">
+      <div><h1>Настройки сервера</h1><p>Редактирование config.yaml</p></div>
+      <div class="header-actions"><button class="btn btn-primary btn-sm" onclick="saveSettings()" id="saveBtn">Сохранить</button></div>
+    </div>
+    <div class="panel"><div class="panel-bd" id="settingsForm" style="display:grid;grid-template-columns:1fr 1fr;gap:24px;max-width:700px">
+      <div class="form-group"><label class="lbl">Название сервера</label><input type="text" id="s_hostname" class="input w-full"></div>
+      <div class="form-group"><label class="lbl">Лимит игроков</label><input type="number" id="s_playerlimit" class="input w-full"></div>
+      <div class="form-group"><label class="lbl">Порт</label><input type="number" id="s_port" class="input w-full"></div>
+      <div class="form-group"><label class="lbl">MOTD</label><input type="text" id="s_motd" class="input w-full"></div>
+      <div class="form-group"><label class="lbl">Debug</label><select id="s_debug" class="input w-full"><option value="true">Да</option><option value="false">Нет</option></select></div>
+      <div class="form-group"><label class="lbl">Timeout (сек)</label><input type="number" id="s_timeout" class="input w-full"></div>
+      <div class="form-group"><label class="lbl">Подтверждение входа</label><select id="s_login_approval" class="input w-full"><option value="true">Вкл</option><option value="false">Выкл</option></select></div>
+      <div class="form-group"><label class="lbl">Конфигурация</label><div style="display:flex;flex-direction:column;gap:4px;font-size:0.8rem;color:var(--text-dim);padding-top:4px"><span id="s_areaCount">—</span><span id="s_musicCount">—</span></div></div>
+    </div></div>
+    <div id="settingsStatus" style="margin-top:8px"></div>
+  </main>
+</div>
+{% include '_modals.html' %}
+<script src="/app.js"></script>
+<script>
+async function loadSettings() {
+  try {
+    const d = await api('/api/admin/settings');
+    if (!d.ok) { showToast(d.error||'Ошибка загрузки','error'); return; }
+    const c = d.config;
+    if (document.getElementById('s_hostname')) document.getElementById('s_hostname').value = c.hostname||'';
+    if (document.getElementById('s_playerlimit')) document.getElementById('s_playerlimit').value = c.playerlimit||'';
+    if (document.getElementById('s_port')) document.getElementById('s_port').value = c.port||'';
+    if (document.getElementById('s_motd')) document.getElementById('s_motd').value = c.motd||'';
+    if (document.getElementById('s_debug')) document.getElementById('s_debug').value = String(c.debug);
+    if (document.getElementById('s_timeout')) document.getElementById('s_timeout').value = c.timeout||'';
+    if (document.getElementById('s_login_approval')) document.getElementById('s_login_approval').value = String(c.login_approval);
+    if (document.getElementById('s_areaCount')) document.getElementById('s_areaCount').textContent = 'Зон: '+(c._areas_count||0);
+    if (document.getElementById('s_musicCount')) document.getElementById('s_musicCount').textContent = 'Треков: '+(c._music_count||0);
+  } catch(e) { showToast('Настройки: '+e.message,'error'); }
+}
+async function saveSettings() {
+  const btn = document.getElementById('saveBtn'); if (btn) btn.disabled = true;
+  const fields = {};
+  ['hostname','playerlimit','port','motd','debug','timeout','login_approval'].forEach(k => {
+    const el = document.getElementById('s_'+k);
+    if (el) fields[k] = el.value;
+  });
+  try {
+    const d = await api('/api/admin/settings',{method:'POST',body:JSON.stringify(fields)});
+    if (d.ok) showToast('Настройки сохранены','success');
+    else showToast(d.error||'Ошибка','error');
+  } catch(e) { showToast(e.message,'error'); }
+  finally { if (btn) btn.disabled = false; }
+}
+loadSettings();
+</script>
+</body>
+</html>

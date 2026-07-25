@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FOC CC — Игроки</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body data-page="players">
+<div class="app">
+      {% include '_sidebar.html' %}
+  <main class="main">
+    <div class="page-header">
+      <div><h1>Игроки</h1><p>Игроки онлайн</p></div>
+      <div class="header-actions"><button class="btn btn-ghost btn-sm" onclick="exportCSV('players')">Экспорт CSV</button></div>
+    </div>
+    <div class="filter-bar">
+      <input type="text" id="playerSearch" placeholder="Поиск по имени, персонажу, IPID..." style="flex:1">
+    </div>
+    <div id="playerList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px"></div>
+  </main>
+</div>
+
+<!-- Player Modal -->
+<div class="modal-overlay" id="playerModal">
+  <div class="modal">
+    <div class="modal-header"><h2><span id="modalPName">—</span> <span id="modalPStatus"></span></h2><button class="modal-close" onclick="closeModal('playerModal')">&times;</button></div>
+    <div class="tabs">
+      <button class="tab active" data-tab="info" onclick="switchTab('playerModal','info')">Инфо</button>
+      <button class="tab" data-tab="actions" onclick="switchTab('playerModal','actions')">Действия</button>
+      <button class="tab" data-tab="achievements" onclick="switchTab('playerModal','achievements')">Достижения</button>
+      <button class="tab" data-tab="warnings" onclick="switchTab('playerModal','warnings')">Предупреждения</button>
+      <button class="tab" data-tab="surveillance" onclick="switchTab('playerModal','surveillance')">Слежка</button>
+    </div>
+    <div class="modal-body">
+      <div class="tab-content active" data-tab="info" id="playerInfo"></div>
+      <div class="tab-content" data-tab="actions" id="playerActions"></div>
+      <div class="tab-content" data-tab="achievements" id="pAchieveList"></div>
+      <div class="tab-content" data-tab="warnings" id="playerWarnings"></div>
+      <div class="tab-content" data-tab="surveillance" id="playerSurveillance">
+        <div class="surv-box" id="playerMessages">Откройте вкладку Инфо для загрузки сообщений</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+  <div class="modal-overlay" id="profileModal" onclick="if(event.target===this)closeModal('profileModal')">
+    <div class="modal" style="max-width:480px">
+      <div class="modal-header"><h2>Профиль</h2><button class="modal-close" onclick="closeModal('profileModal')">&times;</button></div>
+      <div class="modal-body" id="profileModalBody"></div>
+    </div>
+  </div>
+<script src="/app.js"></script>
+</body>
+</html>

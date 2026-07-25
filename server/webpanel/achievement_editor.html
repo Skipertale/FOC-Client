@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FOC CC — Редактор ачивок</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body data-page="achievement_editor">
+<div class="app">
+      {% include '_sidebar.html' %}
+  <main class="main">
+    <div class="page-header">
+      <div><h1>Редактор ачивок</h1><p>Добавление и изменение достижений</p></div>
+      <div class="header-actions"><button class="btn btn-primary btn-sm" onclick="showAchForm()">Создать ачивку</button></div>
+    </div>
+    <div class="panel"><div class="panel-bd" style="padding:0">
+      <div class="table-wrap"><table>
+        <thead><tr><th>ID</th><th>Название</th><th>Категория</th><th>Критерий</th><th>Значение</th><th></th></tr></thead>
+        <tbody id="achEditorTable"></tbody>
+      </table></div></div></div>
+  </main>
+</div>
+<div class="modal-overlay" id="achFormModal" onclick="if(event.target===this)closeModal('achFormModal')">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-header"><h2 id="achFormTitle">Создать ачивку</h2><button class="modal-close" onclick="closeModal('achFormModal')">&times;</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="achFormId">
+      <div class="form-group"><label class="lbl">ID (уникальный)</label><input type="text" id="achFormKey" class="input w-full" placeholder="например: veteran_writer"></div>
+      <div class="form-group"><label class="lbl">Название</label><input type="text" id="achFormName" class="input w-full"></div>
+      <div class="form-group"><label class="lbl">Описание</label><textarea id="achFormDesc" class="input w-full" rows="3"></textarea></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div class="form-group"><label class="lbl">Категория</label><select id="achFormCategory" class="input w-full"><option value="social">Социальное</option><option value="rping">Ролевая игра</option><option value="exploration">Исследование</option><option value="other">Прочее</option></select></div>
+        <div class="form-group"><label class="lbl">Иконка</label><input type="text" id="achFormIcon" class="input w-full" placeholder="emoji/символ"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div class="form-group"><label class="lbl">Тип критерия</label><select id="achFormCriteria" class="input w-full"><option value="ic_messages">IC сообщения</option><option value="ooc_messages">OOC сообщения</option><option value="playtime_seconds">Время в игре</option><option value="logins">Логины</option><option value="modcalls">ADM запросы</option><option value="areas_visited">Зоны посещено</option><option value="char_switches">Смен персонажа</option></select></div>
+        <div class="form-group"><label class="lbl">Порог</label><input type="number" id="achFormValue" class="input w-full" value="1"></div>
+      </div>
+      <button class="btn btn-primary w-full" onclick="saveAch()">Сохранить</button>
+    </div>
+  </div>
+</div>
+{% include '_modals.html' %}
+<script src="/app.js"></script>
+<script>
+async function loadAchEditor() {
+  try {
+    const d = await api('/api/achievement_editor/defs');
+    const tbl = document.getElementById('achEditorTable'); if (!tbl) return;
+    if (!d.definitions||!d.definitions.length) { tbl.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-dim);padding:24px">Нет ачивок</td></tr>'; return; }
+    tbl.innerHTML = d.definitions.map(a => `<tr>
+      <td><code>${esc(a.id)}</code></td>
+      <td><strong>${esc(a.name)}</strong>${a.description?'<br><span style="font-size:0.7rem;color:var(--text-dim)">'+esc(a.description)+'</span>':''}</td>
+      <td style="font-size:0.8rem">${a.category}</td>
+      <td style="font-size:0.8rem">${a.criteria_type}</td>
+      <td style="font-size:0.8rem">${a.criteria_value}</td>
+      <td style="text-align:right;white-space:nowrap">
+        <button class="btn btn-ghost btn-sm" onclick="editAch('${esc(a.id)}')">&#9998;</button>
+        <button class="btn btn-ghost btn-sm" onclick="deleteAch('${esc(a.id)}')">&#10005;</button>
+      </td>
+    </tr>`).join('');
+  } catch(e) { showToast('Ачивки: '+e.message,'error'); }
+}
+function showAchForm() {
+  document.getElementById('achFormId').value=''; document.getElementById('achFormKey').value='';
+  document.getElementById('achFormName').value=''; document.getElementById('achFormDesc').value='';
+  document.getElementById('achFormCategory').value='other'; document.getElementById('achFormIcon').value='';
+  document.getElementById('achFormCriteria').value='ic_messages'; document.getElementById('achFormValue').value='1';
+  document.getElementById('achFormTitle').textContent='Создать ачивку';
+  document.getElementById('achFormKey').disabled=false;
+  openModal('achFormModal');
+}
+function editAch(id) {
+  showAchForm();
+  document.getElementById('achFormTitle').textContent='Редактировать ачивку';
+  document.getElementById('achFormId').value=id;
+  document.getElementById('achFormKey').disabled=true;
+}
+async function saveAch() {
+  const id = document.getElementById('achFormId').value;
+  const key = document.getElementById('achFormKey').value.trim();
+  const name = document.getElementById('achFormName').value.trim();
+  if (!key||!name) { showToast('Заполните ID и название','warning'); return; }
+  const body = {id:key,name,description:document.getElementById('achFormDesc').value.trim(),icon:document.getElementById('achFormIcon').value.trim(),category:document.getElementById('achFormCategory').value,criteria_type:document.getElementById('achFormCriteria').value,criteria_value:parseInt(document.getElementById('achFormValue').value)||1};
+  const url = id ? `/api/achievement_editor/defs/${id}` : '/api/achievement_editor/defs';
+  try { await api(url,{method:'POST',body:JSON.stringify(body)}); showToast('Сохранено','success'); closeModal('achFormModal'); loadAchEditor(); }
+  catch(e) { showToast(e.message,'error'); }
+}
+async function deleteAch(id) {
+  if (!confirm('Удалить ачивку и выдать её всем игрокам?')) return;
+  try { await api(`/api/achievement_editor/defs/${id}/delete`,{method:'POST'}); showToast('Удалено','success'); loadAchEditor(); }
+  catch(e) { showToast(e.message,'error'); }
+}
+loadAchEditor();
+</script>
+</body>
+</html>

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FOC CC — Режим игрока</title>
+<style>
+* { box-sizing:border-box; }
+html, body { margin:0; height:100%; background:#06060c; color:#c8d4e8; font-family:system-ui,sans-serif; display:flex; align-items:center; justify-content:center; }
+.login-card { background:rgba(10,12,24,0.95); border:1px solid rgba(0,240,255,0.15); border-radius:8px; padding:30px 40px; text-align:center; max-width:380px; width:90%; box-shadow:0 0 40px rgba(0,240,255,0.08); }
+h1 { margin:0 0 4px; font-size:1.2rem; font-weight:600; }
+.hl { color:#00f0ff; }
+p { color:#5a6a8a; font-size:0.8rem; margin:0 0 16px; }
+input { width:100%; padding:10px 12px; font-size:0.95rem; background:rgba(0,10,30,0.5); border:1px solid rgba(0,240,255,0.1); border-radius:4px; color:#c8d4e8; outline:none; }
+input:focus { border-color:rgba(0,240,255,0.4); }
+button { width:100%; padding:10px; font-size:0.9rem; background:rgba(0,240,255,0.08); border:1px solid rgba(0,240,255,0.15); border-radius:4px; color:#00f0ff; cursor:pointer; font-weight:600; margin-top:10px; }
+button:hover { background:rgba(0,240,255,0.14); }
+.err { color:#ff3355; font-size:0.78rem; margin-top:8px; display:none; }
+</style>
+</head>
+<body>
+<div class="login-card">
+  <h1><span class="hl">FOC</span> Criminal Case</h1>
+  <p>Режим игрока</p>
+  <div class="err" id="errMsg"></div>
+  <input type="text" id="codeInput" placeholder="Персональный код" autocomplete="off" onkeydown="if(event.key==='Enter') verify()" autofocus>
+  <button onclick="verify()">Войти</button>
+</div>
+<script>
+function verify() {
+  var code = document.getElementById('codeInput').value.trim();
+  if (!code) return;
+  var btn = document.querySelector('button');
+  btn.disabled = true;
+  btn.textContent = 'Проверка...';
+  fetch('/api/verify_player_code', {method:'POST', body:JSON.stringify({code:code}), headers:{'Content-Type':'application/json'}})
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (d.ok) { window.location.href = '/player'; }
+      else { document.getElementById('errMsg').textContent = d.error || 'Неверный код'; document.getElementById('errMsg').style.display = 'block'; btn.disabled = false; btn.textContent = 'Войти'; }
+    })
+    .catch(function() { document.getElementById('errMsg').textContent = 'Ошибка сервера'; document.getElementById('errMsg').style.display = 'block'; btn.disabled = false; btn.textContent = 'Войти'; });
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FOC CC — Дашборд</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body data-page="dashboard">
+<div class="app">
+      {% include '_sidebar.html' %}
+  <main class="main">
+    {% if role is defined and role == 'user' %}
+    <div class="no-access" style="display:flex;align-items:center;justify-content:center;height:60vh;flex-direction:column;gap:1rem">
+      <h2 style="color:var(--muted)">У вас нет прав для просмотра</h2>
+      <p style="color:var(--muted2)">Обратитесь к администратору для получения доступа.</p>
+    </div>
+    {% else %}
+    <div class="page-header">
+      <div>
+        <h1><span class="hl">FOC</span> Criminal Case</h1>
+        <p>Панель управления сервером</p>
+      </div>
+    </div>
+
+    <div class="stats-bar">
+      <div class="stat-cell"><div class="stat-dot cyan"></div><div><div class="stat-val" id="statPlayers">—</div><div class="stat-lbl">Игроки</div></div></div>
+      <div class="stat-cell"><div class="stat-dot green"></div><div><div class="stat-val" id="statClients">—</div><div class="stat-lbl">Клиенты</div></div></div>
+      <div class="stat-cell"><div class="stat-dot gold"></div><div><div class="stat-val" id="statAreas">—</div><div class="stat-lbl">Зоны</div></div></div>
+      <div class="stat-cell"><div class="stat-dot magenta"></div><div><div class="stat-val" id="statMods">—</div><div class="stat-lbl">Модераторы</div></div></div>
+      <div class="stat-cell"><div class="stat-dot purple"></div><div><div class="stat-val" id="statUptime">—</div><div class="stat-lbl">Аптайм</div></div></div>
+    </div>
+
+    <div class="dash-grid">
+      <div class="panel span-2" id="graphW">
+        <div class="panel-hd"><h3><span class="accent">&#9632;</span> Активность по зонам</h3></div>
+        <div class="panel-bd"><div class="bar-chart" id="graphBars"></div></div>
+      </div>
+
+      <div class="panel" id="lbW">
+        <div class="panel-hd"><h3><span class="accent">&#9641;</span> Таблица лидеров</h3></div>
+        <div class="panel-bd" style="padding:0 16px 8px;max-height:300px;overflow-y:auto" id="lbList"></div>
+      </div>
+
+      <div class="panel span-2" id="areasW">
+        <div class="panel-hd"><h3><span class="accent">&#9632;</span> Зоны</h3></div>
+        <div class="panel-bd" style="padding:0"><div class="table-wrap"><table><thead><tr><th>Хаб</th><th>Зона</th><th>Игроки</th><th>Музыка</th></tr></thead><tbody id="areasTable"></tbody></table></div></div>
+      </div>
+
+      <div class="panel" id="approvalsW">
+        <div class="panel-hd"><h3><span class="accent">&#9679;</span> Подтверждения</h3></div>
+        <div class="panel-bd" id="approvalsList" style="max-height:280px;overflow-y:auto;font-size:0.78rem"></div>
+      </div>
+
+      <div class="panel span-full" id="oocW">
+        <div class="panel-hd"><h3><span class="accent">&#9993;</span> OOC Рассылка</h3></div>
+        <div class="panel-bd">
+          <div class="form-group"><textarea id="oocText" placeholder="Сообщение всем игрокам..." rows="2"></textarea></div>
+          <button class="btn btn-primary w-full" onclick="sendOOC()">Отправить</button>
+        </div>
+      </div>
+
+      <div class="panel span-full" id="consoleW">
+        <div class="panel-hd"><h3><span class="accent">&#10096;</span> Командная консоль</h3></div>
+        <div class="panel-bd">
+          <div class="console">
+            <div class="console-out" id="conOut"></div>
+            <div class="console-in">
+              <input type="text" id="conIn" placeholder="Команда..." autocomplete="off" onkeydown="if(event.key==='Enter') execCmd()">
+              <button class="btn btn-primary btn-sm" onclick="execCmd()">Выполнить</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel mt-4">
+      <div class="panel-hd"><h3><span class="accent">&#9881;</span> Виджеты</h3></div>
+      <div class="panel-bd">
+        <div class="wcfg">
+          <label><input type="checkbox" class="wcfg" value="graph"><span>Активность</span></label>
+          <label><input type="checkbox" class="wcfg" value="lb"><span>Лидеры</span></label>
+          <label><input type="checkbox" class="wcfg" value="areas"><span>Зоны</span></label>
+          <label><input type="checkbox" class="wcfg" value="approvals"><span>Подтверждения</span></label>
+          <label><input type="checkbox" class="wcfg" value="ooc"><span>OOC</span></label>
+          <label><input type="checkbox" class="wcfg" value="console"><span>Консоль</span></label>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </main>
+
+  <div class="modal-overlay" id="profileModal" onclick="if(event.target===this)closeModal('profileModal')">
+    <div class="modal" style="max-width:480px">
+      <div class="modal-header"><h2>Профиль</h2><button class="modal-close" onclick="closeModal('profileModal')">&times;</button></div>
+      <div class="modal-body" id="profileModalBody"></div>
+    </div>
+  </div>
+</div>
+
+{% if role != 'user' %}
+<script src="/app.js"></script>
+<script>(async function(){try{const r=await fetch('/api/ping');const d=await r.json();document.title=(d.ok?'OK':'ERR')+' FOC CC'}catch(e){document.title='ERR FOC CC'}})();</script>
+{% endif %}
+</body>
+</html>

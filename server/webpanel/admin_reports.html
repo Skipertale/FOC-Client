@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FOC CC — Отчёты</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body data-page="admin_reports">
+<div class="app">
+      {% include '_sidebar.html' %}
+  <main class="main">
+    <div class="page-header">
+      <div><h1>Генератор отчётов</h1><p>Статистика за период</p></div>
+      <div class="header-actions" style="display:flex;gap:8px;align-items:center">
+        <label class="lbl" style="margin:0;white-space:nowrap">Дней:</label>
+        <select id="reportDays" class="input" style="width:80px">
+          <option value="1">1</option><option value="3">3</option><option value="7" selected>7</option><option value="14">14</option><option value="30">30</option>
+        </select>
+        <button class="btn btn-primary btn-sm" onclick="generateReport()">Сформировать</button>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:16px;margin-bottom:24px" id="reportCards"></div>
+    <div class="panel">
+      <div class="panel-hd"><span>DAU по дням</span></div>
+      <div class="panel-bd"><canvas id="reportChart" height="200" style="width:100%"></canvas></div>
+    </div>
+    <div class="panel" style="margin-top:16px">
+      <div class="panel-hd"><span>Топ-10 игроков</span></div>
+      <div class="panel-bd"><div class="table-wrap"><table><thead><tr><th>#</th><th>IPID</th><th>Сообщений</th></tr></thead><tbody id="reportTop"></tbody></table></div></div>
+    </div>
+  </main>
+</div>
+{% include '_modals.html' %}
+<script src="/app.js"></script>
+<script>
+async function generateReport() {
+  const days = parseInt(document.getElementById('reportDays').value);
+  try {
+    const d = await api('/api/admin/reports/generate',{method:'POST',body:JSON.stringify({days})});
+    // Cards
+    const cards = document.getElementById('reportCards');
+    cards.innerHTML = [
+      {l:'Всего сообщений',v:d.total_messages.toLocaleString()},
+      {l:'Сред. DAU',v:d.avg_dau},
+      {l:'Новых игроков',v:d.new_players},
+      {l:'Банов',v:d.bans},
+      {l:'Ачивок выдано',v:d.achievements_granted},
+      {l:'Период',v:days+' дн.'},
+    ].map(i => `<div class="metric-card" style="text-align:center;padding:16px;background:var(--bg-card);border-radius:8px"><div style="font-size:1.4rem;font-weight:700">${i.v}</div><div style="font-size:0.75rem;color:var(--text-dim);margin-top:4px">${i.l}</div></div>`).join('');
+    // Chart
+    const canvas = document.getElementById('reportChart');
+    if (canvas&&d.dau&&d.dau.length) {
+      const ctx = canvas.getContext('2d');
+      const labels = d.dau.map(b=>b.day.slice(5));
+      const data = d.dau.map(b=>b.count);
+      const maxVal = Math.max(...data,1);
+      const w = canvas.offsetWidth||800, h = 200, pad = {t:20,r:20,b:30,l:40};
+      canvas.width = w*window.devicePixelRatio; canvas.height = h*window.devicePixelRatio;
+      ctx.scale(window.devicePixelRatio,window.devicePixelRatio);
+      ctx.clearRect(0,0,w,h);
+      const x = (i)=>pad.l + i*(w-pad.l-pad.r)/(labels.length-1||1);
+      const y = (v)=>pad.t + (1-v/maxVal)*(h-pad.t-pad.b);
+      ctx.strokeStyle = '#374151'; ctx.lineWidth = 1;
+      for (let i=0;i<=4;i++) { const yy = pad.t+i*(h-pad.t-pad.b)/4; ctx.beginPath(); ctx.moveTo(pad.l,yy); ctx.lineTo(w-pad.r,yy); ctx.stroke(); }
+      ctx.fillStyle = '#9ca3af'; ctx.font = '10px monospace'; ctx.textAlign = 'right';
+      for (let i=0;i<=4;i++) ctx.fillText(Math.round(maxVal*(1-i/4)),pad.l-4,pad.t+i*(h-pad.t-pad.b)/4+3);
+      ctx.beginPath(); ctx.moveTo(x(0),y(data[0]));
+      for (let i=1;i<data.length;i++) ctx.lineTo(x(i),y(data[i]));
+      ctx.strokeStyle = '#10b981'; ctx.lineWidth = 2; ctx.stroke();
+      ctx.fillStyle = '#10b98122'; ctx.beginPath(); ctx.moveTo(x(0),h-pad.b);
+      for (let i=0;i<data.length;i++) ctx.lineTo(x(i),y(data[i]));
+      ctx.lineTo(x(data.length-1),h-pad.b); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#9ca3af'; ctx.font = '9px monospace'; ctx.textAlign = 'center';
+      labels.forEach((l,i)=>{ if (i%Math.ceil(labels.length/12)==0) ctx.fillText(l,x(i),h-pad.b+14); });
+    }
+    // Top players
+    const top = document.getElementById('reportTop');
+    if (d.top_players&&d.top_players.length) {
+      top.innerHTML = d.top_players.map((p,i) => `<tr><td>${i+1}</td><td>${p.ipid}</td><td>${p.count}</td></tr>`).join('');
+    } else { top.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--text-dim)">Нет данных</td></tr>'; }
+  } catch(e) { showToast('Отчёт: '+e.message,'error'); }
+}
+generateReport();
+</script>
+</body>
+</html>

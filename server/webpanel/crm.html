@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FOC CC — Admin CRM</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body data-page="crm">
+<div class="app">
+      {% include '_sidebar.html' %}
+  <main class="main">
+
+    <!-- Hero -->
+    <div class="crm-hero">
+      <div>
+        <div class="eyebrow">Attorney Online · FOC CC</div>
+        <h2><span style="color:var(--crm-accent-2)">Admin</span> CRM</h2>
+        <p class="muted" id="crmSubtitle">Реестр игроков</p>
+      </div>
+      <div style="display:flex;gap:8px" id="crmHeaderActions"></div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs" style="margin-top:20px">
+      <button class="tab active" data-tab="players" onclick="switchTab('crm','players')">Игроки</button>
+      <button class="tab" data-tab="profiles" onclick="switchTab('crm','profiles')">Профили</button>
+      <button class="tab" data-tab="stats" onclick="switchTab('crm','stats')">Статистика</button>
+    </div>
+
+    <!-- Players tab -->
+    <div class="tab-content active" data-tab="players" id="crmPlayers">
+      <div class="crm-section">
+        <div class="toolbar">
+          <input type="search" id="crmPlayerSearch" placeholder="HDID, OOC, IC, персонаж, IP..." oninput="loadCRMPlayers()">
+          <select id="crmPlayerSort" onchange="loadCRMPlayers()">
+            <option value="last_seen_desc">Сначала новые</option>
+            <option value="last_seen_asc">Сначала старые</option>
+            <option value="connect_desc">Больше входов</option>
+            <option value="hdid_asc">HDID А-Я</option>
+          </select>
+          <label class="check"><input type="checkbox" id="crmProfiledOnly" onchange="loadCRMPlayers()"> С профилем</label>
+          <label class="check"><input type="checkbox" id="crmBannedOnly" onchange="loadCRMPlayers()"> Забанен</label>
+        </div>
+        <div class="table-wrap compact" style="margin-top:12px">
+          <table><thead><tr><th>HDID</th><th>OOC</th><th>IC</th><th>Персонаж</th><th>IP</th><th>Входов</th><th>Последний</th><th>Профиль</th></tr></thead><tbody id="crmPlayerBody"></tbody></table>
+        </div>
+        <div class="crm-pagination" id="crmPlayerPagination"></div>
+      </div>
+    </div>
+
+    <!-- Profiles tab -->
+    <div class="tab-content" data-tab="profiles" id="crmProfiles">
+      <div class="crm-section">
+        <div class="toolbar">
+          <input type="search" id="crmProfileSearch" placeholder="Название, OOC, дискорд, теги, заметки, HDID..." oninput="loadCRMProfiles()">
+          <select id="crmProfileSort" onchange="loadCRMProfiles()">
+            <option value="updated_desc">Сначала новые</option>
+            <option value="created_desc">Сначала созданные</option>
+            <option value="title_asc">По имени</option>
+          </select>
+          <button class="btn btn-primary" onclick="openCRMProfileForm()" style="padding:6px 16px">+ Новый профиль</button>
+        </div>
+        <div class="crm-prof-grid" id="crmProfileGrid" style="margin-top:12px"></div>
+        <div class="crm-pagination" id="crmProfilePagination"></div>
+      </div>
+    </div>
+
+    <!-- Stats tab -->
+    <div class="tab-content" data-tab="stats" id="crmStats">
+      <div class="crm-metric-grid" id="crmStatGrid"></div>
+      <div class="crm-section" style="margin-top:16px">
+        <h3>Синхронизация</h3>
+        <div id="crmSyncBody" style="margin-top:10px"></div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Profile form modal -->
+  <div class="modal-overlay" id="crmProfileFormModal" onclick="if(event.target===this)closeModal('crmProfileFormModal')">
+    <div class="modal" style="max-width:600px">
+      <div class="modal-header"><h2 id="crmProfileFormTitle">Новый профиль</h2><button class="modal-close" onclick="closeModal('crmProfileFormModal')">&times;</button></div>
+      <div class="modal-body" id="crmProfileFormBody"></div>
+    </div>
+  </div>
+
+  <!-- Session entry modal -->
+  <div class="modal-overlay" id="crmSessionModal" onclick="if(event.target===this)closeModal('crmSessionModal')">
+    <div class="modal" style="max-width:420px">
+      <div class="modal-header"><h2 id="crmSessionTitle">Карточка игрока</h2><button class="modal-close" onclick="closeModal('crmSessionModal')">&times;</button></div>
+      <div class="modal-body" id="crmSessionBody"></div>
+    </div>
+  </div>
+
+  <!-- Player detail modal -->
+  <div class="modal-overlay" id="crmPlayerModal" onclick="if(event.target===this)closeModal('crmPlayerModal')">
+    <div class="modal" style="max-width:800px">
+      <div class="modal-header"><h2 id="crmPlayerModalTitle">Игрок</h2><button class="modal-close" onclick="closeModal('crmPlayerModal')">&times;</button></div>
+      <div class="modal-body" id="crmPlayerModalBody"></div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="profileModal" onclick="if(event.target===this)closeModal('profileModal')">
+    <div class="modal" style="max-width:480px">
+      <div class="modal-header"><h2>Профиль</h2><button class="modal-close" onclick="closeModal('profileModal')">&times;</button></div>
+      <div class="modal-body" id="profileModalBody"></div>
+    </div>
+  </div>
+</div>
+<script src="/app.js"></script>
+<script src="/crm.js"></script>
+</body>
+</html>

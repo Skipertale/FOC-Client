@@ -1,0 +1,16 @@
+version: "3.3"
+services:
+    tsuserver:
+        build: .
+        image: tsuserver
+        ports:
+            - 27017:27017
+            - 50001:50001
+        environment:
+            - MYSQL_HOST=172.18.0.1
+        volumes:
+            - ./storage:/app/storage
+            - ./logs:/app/logs
+            - ./config:/app/config
+        restart: unless-stopped
+

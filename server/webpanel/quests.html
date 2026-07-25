@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FOC CC — Квесты</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body data-page="quests">
+<div class="app">
+      {% include '_sidebar.html' %}
+  <main class="main">
+    <div class="page-header">
+      <div><h1>Менеджер квестов</h1><p>Создание и управление сценариями</p></div>
+      <div class="header-actions"><button class="btn btn-primary btn-sm" onclick="showQuestForm()">Создать квест</button></div>
+    </div>
+    <div class="panel"><div class="panel-bd" style="padding:0">
+      <div class="table-wrap"><table>
+        <thead><tr><th>Статус</th><th>Название</th><th>Триггер</th><th>Этапов</th><th></th></tr></thead>
+        <tbody id="questsTable"></tbody>
+      </table></div></div></div>
+  </main>
+</div>
+<div class="modal-overlay" id="questFormModal" onclick="if(event.target===this)closeModal('questFormModal')">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-header"><h2 id="questFormTitle">Новый квест</h2><button class="modal-close" onclick="closeModal('questFormModal')">&times;</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="questFormId">
+      <div class="form-group"><label class="lbl">Название</label><input type="text" id="questFormName" class="input w-full"></div>
+      <div class="form-group"><label class="lbl">Описание</label><textarea id="questFormDesc" class="input w-full" rows="3"></textarea></div>
+      <div class="form-group"><label class="lbl">Тип триггера</label><select id="questFormTrigger" class="input w-full"><option value="manual">Ручной</option><option value="enter_room">Вход в комнату</option><option value="message">Сообщение</option><option value="timer">Таймер</option></select></div>
+      <div class="form-group"><label class="lbl">Этапы (JSON)</label><textarea id="questFormStages" class="input w-full" rows="3">[]</textarea></div>
+      <div class="form-group"><label class="lbl">Награды (JSON)</label><textarea id="questFormRewards" class="input w-full" rows="2">{}</textarea></div>
+      <button class="btn btn-primary w-full" onclick="saveQuest()">Сохранить</button>
+    </div>
+  </div>
+</div>
+{% include '_modals.html' %}
+<script src="/app.js"></script>
+<script>
+async function loadQuests() {
+  try {
+    const d = await api('/api/quests');
+    const tbl = document.getElementById('questsTable');
+    if (!tbl) return;
+    if (!d.quests||!d.quests.length) { tbl.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-dim);padding:24px">Нет квестов</td></tr>'; return; }
+    tbl.innerHTML = d.quests.map(q => `<tr>
+      <td><span class="tag ${q.enabled?'tag-cyan':''}" style="font-size:0.7rem">${q.enabled?'Вкл':'Выкл'}</span></td>
+      <td><strong>${esc(q.name)}</strong>${q.description?'<br><span style="font-size:0.7rem;color:var(--text-dim)">'+esc(q.description)+'</span>':''}</td>
+      <td style="font-size:0.8rem">${q.trigger_type}</td>
+      <td style="font-size:0.8rem">${JSON.parse(q.stages||'[]').length}</td>
+      <td style="text-align:right;white-space:nowrap">
+        <button class="btn btn-ghost btn-sm" onclick="editQuest(${q.id})">&#9998;</button>
+        <button class="btn btn-ghost btn-sm" onclick="deleteQuest(${q.id})">&#10005;</button>
+      </td>
+    </tr>`).join('');
+  } catch(e) { showToast('Квесты: '+e.message,'error'); }
+}
+function showQuestForm() {
+  document.getElementById('questFormId').value=''; document.getElementById('questFormName').value='';
+  document.getElementById('questFormDesc').value=''; document.getElementById('questFormTrigger').value='manual';
+  document.getElementById('questFormStages').value='[]'; document.getElementById('questFormRewards').value='{}';
+  document.getElementById('questFormTitle').textContent='Новый квест'; openModal('questFormModal');
+}
+function editQuest(id) {
+  showQuestForm(); document.getElementById('questFormTitle').textContent='Редактировать квест';
+}
+async function saveQuest() {
+  const id = document.getElementById('questFormId').value;
+  const body = {name:document.getElementById('questFormName').value.trim(),description:document.getElementById('questFormDesc').value.trim(),trigger_type:document.getElementById('questFormTrigger').value,stages:[],rewards:{}};
+  if (!body.name) { showToast('Введите название','warning'); return; }
+  const url = id ? `/api/quests/${id}` : '/api/quests';
+  try { await api(url,{method:'POST',body:JSON.stringify(body)}); showToast('Сохранено','success'); closeModal('questFormModal'); loadQuests(); }
+  catch(e) { showToast(e.message,'error'); }
+}
+async function deleteQuest(id) {
+  if (!confirm('Удалить квест?')) return;
+  try { await api(`/api/quests/${id}/delete`,{method:'POST'}); showToast('Удалено','success'); loadQuests(); }
+  catch(e) { showToast(e.message,'error'); }
+}
+loadQuests();
+</script>
+</body>
+</html>

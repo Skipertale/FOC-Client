@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FOC CC — История IPID</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body data-page="ipid_history">
+<div class="app">
+      {% include '_sidebar.html' %}
+  <main class="main">
+    <div class="page-header">
+      <div><h1>История IPID</h1><p>Полная информация об игроке</p></div>
+    </div>
+    <div style="display:flex;gap:12px;margin-bottom:16px">
+      <input type="number" id="historyIpid" class="input" placeholder="IPID..." style="max-width:200px">
+      <button class="btn btn-primary btn-sm" onclick="searchHistory()">Поиск</button>
+    </div>
+    <div id="historyResults"></div>
+  </main>
+</div>
+{% include '_modals.html' %}
+<script src="/app.js"></script>
+<script>
+async function searchHistory() {
+  const ipid = document.getElementById('historyIpid').value.trim();
+  if (!ipid) { showToast('Введите IPID','warning'); return; }
+  const div = document.getElementById('historyResults');
+  div.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+  try {
+    const d = await api('/api/ipid_history',{method:'POST',body:JSON.stringify({ipid:parseInt(ipid)})});
+    if (!d) { div.innerHTML = '<p style="color:var(--text-dim)">Нет данных</p>'; return; }
+    let html = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-bottom:20px">';
+    const cards = [
+      {l:'IPID',v:d.ipid},{l:'Первый вход',v:d.first_seen||'—'},{l:'Последний вход',v:d.last_seen||'—'},{l:'Комнат посещено',v:d.areas_visited}
+    ];
+    if (d.stats) {
+      cards.push({l:'IC сообщ.',v:d.stats.ic_messages||0},{l:'OOC сообщ.',v:d.stats.ooc_messages||0});
+      cards.push({l:'Наиграно (сек)',v:d.stats.playtime_seconds||0},{l:'Логинов',v:d.stats.logins||0});
+    }
+    html += cards.map(c => `<div style="text-align:center;padding:12px;background:var(--bg-card);border-radius:8px"><div style="font-size:1.2rem;font-weight:700">${c.v}</div><div style="font-size:0.7rem;color:var(--text-dim)">${c.l}</div></div>`).join('');
+    html += '</div>';
+    // Accounts
+    if (d.accounts&&d.accounts.length) {
+      html += '<div class="panel" style="margin-bottom:16px"><div class="panel-hd"><span>Аккаунты</span></div><div class="panel-bd" style="padding:0"><div class="table-wrap"><table><thead><tr><th>Login</th><th>Роль</th></tr></thead><tbody>';
+      d.accounts.forEach(a => { html += `<tr><td>${esc(a.login||'')}</td><td>${a.role||'—'}</td></tr>`; });
+      html += '</tbody></table></div></div></div>';
+    }
+    // Characters
+    if (d.characters&&d.characters.length) {
+      html += '<div class="panel" style="margin-bottom:16px"><div class="panel-hd"><span>Персонажи</span></div><div class="panel-bd" style="padding:0"><div class="table-wrap"><table><thead><tr><th>Имя</th><th>Зона</th><th>Хаб</th><th>Последний раз</th></tr></thead><tbody>';
+      d.characters.forEach(c => { html += `<tr><td>${esc(c.char_name)}</td><td>${c.area_name||'—'}</td><td>${c.hub_name||'—'}</td><td style="font-size:0.8rem">${c.last_seen||'—'}</td></tr>`; });
+      html += '</tbody></table></div></div></div>';
+    }
+    if (!d.accounts&&!d.characters) html += '<p style="color:var(--text-dim)">Ничего не найдено</p>';
+    div.innerHTML = html;
+  } catch(e) { div.innerHTML = '<p style="color:var(--error)">'+e.message+'</p>'; }
+}
+</script>
+</body>
+</html>

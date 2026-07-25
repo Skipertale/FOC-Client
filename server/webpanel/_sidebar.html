@@ -1,0 +1,82 @@
+    <aside class="sidebar">
+      <div class="sidebar-brand">FOC CC</div>
+      <nav class="sidebar-nav">
+        {% if role is defined and role in ('ga','moderator','admin','superadmin') %}
+        <div class="nav-section" data-section-name="main">
+          <div class="nav-section-title" onclick="toggleNavSection(this)">Главное</div>
+          <div class="nav-section-body">
+            <a href="/"{% if request is defined and request.url.path == '/' %} class="active"{% endif %}><span class="nav-icon">&#9632;</span><span>Дашборд</span></a>
+            <a href="/players"{% if request is defined and request.url.path == '/players' %} class="active"{% endif %}><span class="nav-icon">&#9679;</span><span>Игроки</span></a>
+            <a href="/rooms"{% if request is defined and request.url.path == '/rooms' %} class="active"{% endif %}><span class="nav-icon">&#9670;</span><span>Комнаты</span></a>
+            <a href="/bans"{% if request is defined and request.url.path == '/bans' %} class="active"{% endif %}><span class="nav-icon">&#10005;</span><span>Баны</span></a>
+            <a href="/logs"{% if request is defined and request.url.path == '/logs' %} class="active"{% endif %}><span class="nav-icon">&#9776;</span><span>Логи</span></a>
+            <a href="/player"{% if request is defined and request.url.path == '/player' %} class="active"{% endif %}><span class="nav-icon">&#9654;</span><span>Режим игрока</span></a>
+          </div>
+        </div>
+        {% endif %}
+        {% if role is defined and role == 'gm' %}
+        <div class="nav-section" data-section-name="main">
+          <div class="nav-section-title" onclick="toggleNavSection(this)">Главное</div>
+          <div class="nav-section-body">
+            <a href="/player"{% if request is defined and request.url.path == '/player' %} class="active"{% endif %}><span class="nav-icon">&#9654;</span><span>Режим игрока</span></a>
+          </div>
+        </div>
+        {% endif %}
+        {% if role is defined and role in ('ga','moderator','admin','superadmin') %}
+        <div class="nav-section" data-section-name="activity">
+          <div class="nav-section-title" onclick="toggleNavSection(this)">Активность</div>
+          <div class="nav-section-body">
+            <a href="/analytics"{% if request is defined and request.url.path == '/analytics' %} class="active"{% endif %}><span class="nav-icon">&#9638;</span><span>Аналитика</span></a>
+            <a href="/achievements"{% if request is defined and request.url.path == '/achievements' %} class="active"{% endif %}><span class="nav-icon">&#9733;</span><span>Ачивки</span></a>
+            <a href="/events"{% if request is defined and request.url.path == '/events' %} class="active"{% endif %}><span class="nav-icon">&#9654;</span><span>События</span></a>
+            <a href="/admin/reports"{% if request is defined and request.url.path == '/admin/reports' %} class="active"{% endif %}><span class="nav-icon">&#9776;</span><span>Отчёты</span></a>
+            <a href="/admin/perf"{% if request is defined and request.url.path == '/admin/perf' %} class="active"{% endif %}><span class="nav-icon">&#9881;</span><span>Мониторинг</span></a>
+          </div>
+        </div>
+        <div class="nav-section" data-section-name="tools">
+          <div class="nav-section-title" onclick="toggleNavSection(this)">Инструменты</div>
+          <div class="nav-section-body">
+            <a href="/crm"{% if request is defined and request.url.path == '/crm' %} class="active"{% endif %}><span class="nav-icon">&#10022;</span><span>Admin CRM</span></a>
+            <a href="/quests"{% if request is defined and request.url.path == '/quests' %} class="active"{% endif %}><span class="nav-icon">&#9879;</span><span>Квесты</span></a>
+            <a href="/bulletin"{% if request is defined and request.url.path == '/bulletin' %} class="active"{% endif %}><span class="nav-icon">&#9776;</span><span>Объявления</span></a>
+            <a href="/shop"{% if request is defined and request.url.path == '/shop' %} class="active"{% endif %}><span class="nav-icon">&#9731;</span><span>Магазин</span></a>
+            <a href="/polls"{% if request is defined and request.url.path == '/polls' %} class="active"{% endif %}><span class="nav-icon">&#9745;</span><span>Голосования</span></a>
+            <a href="/wordfilter"{% if request is defined and request.url.path == '/wordfilter' %} class="active"{% endif %}><span class="nav-icon">&#9888;</span><span>Фильтр слов</span></a>
+            <a href="/ipid_history"{% if request is defined and request.url.path == '/ipid_history' %} class="active"{% endif %}><span class="nav-icon">&#9776;</span><span>История IPID</span></a>
+          </div>
+        </div>
+        {% endif %}
+        {% if role is defined and role in ('moderator','admin','superadmin') %}
+        <div class="nav-section" data-section-name="mod">
+          <div class="nav-section-title" onclick="toggleNavSection(this)">Модерация</div>
+          <div class="nav-section-body">
+            <a href="/admin/audit"{% if request is defined and request.url.path == '/admin/audit' %} class="active"{% endif %}><span class="nav-icon">&#9776;</span><span>Аудит</span></a>
+            <a href="/admin/groups"{% if request is defined and request.url.path == '/admin/groups' %} class="active"{% endif %}><span class="nav-icon">&#9641;</span><span>Группы</span></a>
+            <a href="/playernotes"{% if request is defined and request.url.path == '/playernotes' %} class="active"{% endif %}><span class="nav-icon">&#9998;</span><span>Заметки</span></a>
+            <a href="/automod"{% if request is defined and request.url.path == '/automod' %} class="active"{% endif %}><span class="nav-icon">&#9881;</span><span>Авто-мод</span></a>
+          </div>
+        </div>
+        {% endif %}
+        {% if role is defined and role in ('admin','superadmin') %}
+        <div class="nav-section" data-section-name="admin">
+          <div class="nav-section-title" onclick="toggleNavSection(this)">Администрирование</div>
+          <div class="nav-section-body">
+            <a href="/admin/settings"{% if request is defined and request.url.path == '/admin/settings' %} class="active"{% endif %}><span class="nav-icon">&#9878;</span><span>Настройки</span></a>
+            <a href="/achievement_editor"{% if request is defined and request.url.path == '/achievement_editor' %} class="active"{% endif %}><span class="nav-icon">&#9733;</span><span>Редактор ачивок</span></a>
+          </div>
+        </div>
+        {% endif %}
+        {% if role is defined and role == 'superadmin' %}
+        <div class="nav-section" data-section-name="system">
+          <div class="nav-section-title" onclick="toggleNavSection(this)">Система</div>
+          <div class="nav-section-body">
+            <a href="/admin/backups"{% if request is defined and request.url.path == '/admin/backups' %} class="active"{% endif %}><span class="nav-icon">&#9650;</span><span>Бэкапы</span></a>
+          </div>
+        </div>
+        {% endif %}
+      </nav>
+      <div class="sidebar-footer">
+        <button onclick="openProfileModal()">Профиль</button>
+        <button onclick="location.href='/login'">Выход</button>
+      </div>
+    </aside>

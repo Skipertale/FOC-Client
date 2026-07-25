@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FOC CC — Ачивки</title>
+<link rel="stylesheet" href="/style.css">
+<style>
+.progress-bar { height:6px; border-radius:4px; background:rgba(255,255,255,0.06); margin-top:6px; overflow:hidden; }
+.progress-bar-fill { height:100%; border-radius:4px; transition:width .4s; }
+.ach-card { padding:14px; border-radius:var(--radius); border:1px solid var(--border); background:var(--bg-card); }
+.ach-card h4 { margin:0 0 4px; font-size:0.9rem; }
+.ach-card .meta { font-size:0.72rem; color:var(--text-dim); }
+.ach-card .pct { font-size:1.1rem; font-weight:700; }
+</style>
+</head>
+<body data-page="achievements">
+<div class="app">
+      {% include '_sidebar.html' %}
+  <main class="main">
+    <div class="page-header"><div><h1>Прогресс ачивок</h1><p>Статистика получения достижений игроками</p></div></div>
+    <div id="achProgressGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px"></div>
+  </main>
+</div>
+{% include '_modals.html' %}
+<script src="/app.js"></script>
+<script>
+async function loadAchievementProgress() {
+  try {
+    const d = await api('/api/achievements/progress');
+    const grid = document.getElementById('achProgressGrid');
+    if (!d.progress||!d.progress.length) { grid.innerHTML = '<div class="panel"><div class="panel-bd" style="color:var(--text-dim)">Нет данных</div></div>'; return; }
+    const cats = {};
+    for (const a of d.progress) {
+      const cat = a.category||'other';
+      if (!cats[cat]) cats[cat] = [];
+      cats[cat].push(a);
+    }
+    const catNames = {communication:'\u041E\u0431\u0449\u0435\u043D\u0438\u0435',activity:'\u0410\u043A\u0442\u0438\u0432\u043D\u043E\u0441\u0442\u044C',exploration:'\u0418\u0441\u0441\u043B\u0435\u0434\u043E\u0432\u0430\u043D\u0438\u044F',moderation:'\u041C\u043E\u0434\u0435\u0440\u0430\u0446\u0438\u044F',other:'\u041F\u0440\u043E\u0447\u0435\u0435'};
+    const catColors = {communication:'#00b4ff',activity:'#00e676',exploration:'#b388ff',moderation:'#ffd740',other:'#ff4081'};
+    let html = '';
+    for (const [cat, items] of Object.entries(cats)) {
+      html += `<div style="grid-column:1/-1;margin-top:8px"><h3 style="color:${catColors[cat]||'var(--text)'}">${catNames[cat]||cat}</h3></div>`;
+      for (const a of items) {
+        const color = a.percent >= 50 ? '#00e676' : a.percent >= 20 ? '#ffd740' : '#ff4081';
+        html += `<div class="ach-card">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div><h4>${esc(a.name)}</h4><div class="meta">${esc(a.description)}</div></div>
+            <div class="pct" style="color:${color}">${a.percent}%</div>
+          </div>
+          <div class="progress-bar"><div class="progress-bar-fill" style="width:${a.percent}%;background:${color}"></div></div>
+          <div class="meta" style="margin-top:4px">${a.unlocked_count}/${a.total_players} \u0438\u0433\u0440\u043E\u043A\u043E\u0432</div>
+        </div>`;
+      }
+    }
+    grid.innerHTML = html;
+  } catch(e) { showToast('Ачивки: '+e.message,'error'); }
+}
+loadAchievementProgress();
+</script>
+</body>
+</html>
